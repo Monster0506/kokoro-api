@@ -2,6 +2,9 @@
   "functions": {
     "api/tts.js": {
       "maxDuration": 60
+    },
+    "api/warmup.js": {
+      "maxDuration": 60
     }
   }
 }
