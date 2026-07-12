@@ -15,16 +15,17 @@
     max-width: 460px;
     margin: 0 auto;
     background: #d9d9d9;
-    border: 2px outset #ffffff;
     padding: 10px;
   }
-  fieldset {
-    border: 2px groove #a3a3a3;
-    margin: 0 0 10px 0;
-    padding: 8px;
+  section {
+    margin: 0 0 14px 0;
   }
-  legend {
-    padding: 0 4px;
+  section:last-child {
+    margin-bottom: 0;
+  }
+  section > .heading {
+    font-weight: bold;
+    margin-bottom: 6px;
   }
   label {
     display: block;
@@ -77,8 +78,8 @@
 </style>
 
 <div class="window">
-  <fieldset>
-    <legend>Text</legend>
+  <section>
+    <div class="heading">Text</div>
     <div class="row">
       <label for="text">Text to speak:</label>
       <textarea id="text" maxlength="2000">Hello from Kokoro running as a pure Node.js function.</textarea>
@@ -123,20 +124,20 @@
     <div class="row">
       <button id="generate" type="button">Generate</button>
     </div>
-  </fieldset>
+  </section>
 
-  <fieldset>
-    <legend>Status</legend>
+  <section>
+    <div class="heading">Status</div>
     <div id="status">Ready.</div>
-  </fieldset>
+  </section>
 
-  <fieldset id="output">
-    <legend>Output</legend>
+  <section id="output">
+    <div class="heading">Output</div>
     <audio id="audio" controls></audio>
     <div class="row">
       <button id="download" type="button">Save WAV...</button>
     </div>
-  </fieldset>
+  </section>
 </div>
 
 <script>
