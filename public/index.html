@@ -1,0 +1,210 @@
+<title>Kokoro TTS</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background: #d9d9d9;
+    color: #000000;
+    font-family: Tahoma, "MS Sans Serif", Verdana, sans-serif;
+    font-size: 12px;
+    margin: 0;
+    padding: 16px;
+  }
+  .window {
+    max-width: 460px;
+    margin: 0 auto;
+    background: #d9d9d9;
+    border: 2px outset #ffffff;
+    padding: 10px;
+  }
+  fieldset {
+    border: 2px groove #a3a3a3;
+    margin: 0 0 10px 0;
+    padding: 8px;
+  }
+  legend {
+    padding: 0 4px;
+  }
+  label {
+    display: block;
+    margin-bottom: 4px;
+  }
+  textarea, select {
+    width: 100%;
+    background: #ffffff;
+    border: 2px inset #ffffff;
+    font-family: inherit;
+    font-size: 12px;
+    padding: 3px;
+  }
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+  .row {
+    margin-bottom: 10px;
+  }
+  .row:last-child {
+    margin-bottom: 0;
+  }
+  button {
+    background: #d9d9d9;
+    border: 2px outset #ffffff;
+    padding: 4px 14px;
+    font-family: inherit;
+    font-size: 12px;
+  }
+  button:active:not(:disabled) {
+    border-style: inset;
+  }
+  button:disabled {
+    color: #808080;
+  }
+  #status {
+    border: 2px inset #ffffff;
+    background: #ffffff;
+    padding: 4px 6px;
+    min-height: 16px;
+  }
+  #output {
+    display: none;
+  }
+  audio {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+</style>
+
+<div class="window">
+  <fieldset>
+    <legend>Text</legend>
+    <div class="row">
+      <label for="text">Text to speak:</label>
+      <textarea id="text" maxlength="2000">Hello from Kokoro running as a pure Node.js function.</textarea>
+    </div>
+    <div class="row">
+      <label for="voice">Voice:</label>
+      <select id="voice">
+        <optgroup label="American English">
+          <option value="af_heart">Heart</option>
+          <option value="af_alloy">Alloy</option>
+          <option value="af_aoede">Aoede</option>
+          <option value="af_bella">Bella</option>
+          <option value="af_jessica">Jessica</option>
+          <option value="af_kore">Kore</option>
+          <option value="af_nicole">Nicole</option>
+          <option value="af_nova">Nova</option>
+          <option value="af_river">River</option>
+          <option value="af_sarah">Sarah</option>
+          <option value="af_sky">Sky</option>
+          <option value="am_adam">Adam</option>
+          <option value="am_echo">Echo</option>
+          <option value="am_eric">Eric</option>
+          <option value="am_fenrir">Fenrir</option>
+          <option value="am_liam">Liam</option>
+          <option value="am_michael">Michael</option>
+          <option value="am_onyx">Onyx</option>
+          <option value="am_puck">Puck</option>
+          <option value="am_santa">Santa</option>
+        </optgroup>
+        <optgroup label="British English">
+          <option value="bf_alice">Alice</option>
+          <option value="bf_emma">Emma</option>
+          <option value="bf_isabella">Isabella</option>
+          <option value="bf_lily">Lily</option>
+          <option value="bm_daniel">Daniel</option>
+          <option value="bm_fable">Fable</option>
+          <option value="bm_george">George</option>
+          <option value="bm_lewis" selected>Lewis</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="row">
+      <button id="generate" type="button">Generate</button>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Status</legend>
+    <div id="status">Ready.</div>
+  </fieldset>
+
+  <fieldset id="output">
+    <legend>Output</legend>
+    <audio id="audio" controls></audio>
+    <div class="row">
+      <button id="download" type="button">Save WAV...</button>
+    </div>
+  </fieldset>
+</div>
+
+<script>
+  const textEl = document.getElementById("text");
+  const voiceEl = document.getElementById("voice");
+  const generateBtn = document.getElementById("generate");
+  const statusEl = document.getElementById("status");
+  const outputEl = document.getElementById("output");
+  const audioEl = document.getElementById("audio");
+  const downloadBtn = document.getElementById("download");
+
+  let objectUrl = null;
+
+  function setStatus(message, isError) {
+    statusEl.textContent = message;
+    statusEl.style.color = isError ? "#800000" : "#000000";
+  }
+
+  async function generate() {
+    const text = textEl.value.trim();
+    if (!text) {
+      setStatus("Please enter some text.", true);
+      return;
+    }
+
+    generateBtn.disabled = true;
+    outputEl.style.display = "none";
+    setStatus("Generating...");
+
+    try {
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, voice: voiceEl.value }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Request failed (${res.status})`);
+      }
+
+      const blob = await res.blob();
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+      objectUrl = URL.createObjectURL(blob);
+      audioEl.src = objectUrl;
+      outputEl.style.display = "block";
+      setStatus("Done.");
+    } catch (err) {
+      setStatus(err.message || "Something went wrong.", true);
+    } finally {
+      generateBtn.disabled = false;
+    }
+  }
+
+  function download() {
+    if (!objectUrl) {
+      return;
+    }
+    const a = document.createElement("a");
+    a.href = objectUrl;
+    a.download = `kokoro-${voiceEl.value}-${Date.now()}.wav`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  generateBtn.addEventListener("click", generate);
+  downloadBtn.addEventListener("click", download);
+</script>
