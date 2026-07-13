@@ -1,7 +1,8 @@
 {
   "functions": {
     "api/tts.js": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "includeFiles": "node_modules/kokoro-js/voices/**"
     },
     "api/warmup.js": {
       "maxDuration": 60
